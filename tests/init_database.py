@@ -47,24 +47,24 @@ def init_db() -> None:
     try:
         mycursor.execute("""
 CREATE TABLE Todo (
-    ID int NOT NULL AUTO_INCREMENT,
-    Title varchar(255),
-    Detail varchar(255),
-    BeginTime int,
-    EndTime int,
-    IsDeadLine boolean,
-    IsFinished boolean,
-    PRIMARY KEY (ID)
+    id int NOT NULL AUTO_INCREMENT,
+    title varchar(255),
+    detail varchar(255),
+    begin int,
+    end int,
+    isDeadLine boolean,
+    isFinished boolean,
+    PRIMARY KEY (id)
 );
 """)
         print("Todo数据表创建完成")
         mycursor.execute("""
 CREATE TABLE Note (
-    ID int NOT NULL AUTO_INCREMENT,
-    Title varchar(255),
-    Content varchar(255),
-    CreateTime int,
-    IsStar boolean,
+    id int NOT NULL AUTO_INCREMENT,
+    title varchar(255),
+    content varchar(255),
+    date int,
+    star boolean,
     PRIMARY KEY (ID)
 );
 """)
