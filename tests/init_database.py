@@ -46,7 +46,7 @@ def init_db() -> None:
     # 创建数据表
     try:
         mycursor.execute("""
-CREATE TABLE Todo (
+CREATE TABLE todo (
     id int NOT NULL AUTO_INCREMENT,
     title varchar(255),
     detail varchar(255),
@@ -59,7 +59,7 @@ CREATE TABLE Todo (
 """)
         print("Todo数据表创建完成")
         mycursor.execute("""
-CREATE TABLE Note (
+CREATE TABLE note (
     id int NOT NULL AUTO_INCREMENT,
     title varchar(255),
     content varchar(255),
