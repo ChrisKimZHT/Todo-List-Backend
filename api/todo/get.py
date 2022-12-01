@@ -35,19 +35,30 @@ def todoGet():
         mycursor = mydb.cursor()
         sql = f"SELECT * FROM todo WHERE id={request_id}"
         mycursor.execute(sql)
-        data = mycursor.fetchall()[0]
-        selected_todo = {
-            "id": data[0],
-            "title": data[1],
-            "detail": data[2],
-            "begin": data[3],
-            "end": data[4],
-            "isDeadLine": bool(data[5]),
-            "isFinished": bool(data[6]),
-        }
-        return jsonify({"data": selected_todo, "status": 0, "message": "OK"})
+        data = mycursor.fetchall()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
     finally:
         mydb.close()
+
+    # 检测数据是否存在
+    if len(data) == 0:
+        abort(400, description="Request ID Not Found.")
+        return
+
+    # 数据处理操作
+    try:
+        selected_todo = {
+            "id": data[0][0],
+            "title": data[0][1],
+            "detail": data[0][2],
+            "begin": data[0][3],
+            "end": data[0][4],
+            "isDeadLine": bool(data[0][5]),
+            "isFinished": bool(data[0][6]),
+        }
+        return jsonify({"data": selected_todo, "status": 0, "message": "OK"})
+    except Exception as e:
+        abort(500, description=f"Process Data Error. {e}")
+        return

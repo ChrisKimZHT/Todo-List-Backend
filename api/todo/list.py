@@ -27,6 +27,14 @@ def todoList():
         sql = "SELECT * FROM todo"
         mycursor.execute(sql)
         data = mycursor.fetchall()
+    except Exception as e:
+        abort(500, description=f"Database Operation Error. {e}")
+        return
+    finally:
+        mydb.close()
+
+    # 数据处理操作
+    try:
         todo_list = []
         for todo in data:
             todo_list.append({
@@ -40,7 +48,5 @@ def todoList():
             })
         return jsonify({"data": todo_list, "status": 0, "message": "OK"})
     except Exception as e:
-        abort(500, description=f"Database Operation Error. {e}")
+        abort(500, description=f"Process Data Error. {e}")
         return
-    finally:
-        mydb.close()
