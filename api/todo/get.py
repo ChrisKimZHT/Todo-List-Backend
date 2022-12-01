@@ -1,10 +1,7 @@
 from api.todo import todo_bp
 from flask import request, abort, jsonify
 import mysql.connector
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
 
 
 @todo_bp.route("/get", methods=["GET"])

@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+
+load_dotenv()
 from flask import Flask, jsonify
 from api.todo import todo_bp
 from api.note import note_bp

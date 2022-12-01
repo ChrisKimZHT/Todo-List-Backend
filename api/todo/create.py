@@ -2,11 +2,8 @@ import pydantic.error_wrappers
 from flask import abort, request, jsonify
 from api.todo import todo_bp
 import mysql.connector
-from dotenv import load_dotenv
 import os
 from request_model.TodoCreateModel import TodoCreateModel
-
-load_dotenv()
 
 
 @todo_bp.route("/create", methods=["POST"])

@@ -1,10 +1,7 @@
 from flask import abort, jsonify
 from api.todo import todo_bp
 import mysql.connector
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
 
 
 @todo_bp.route("/nextID", methods=["GET"])
