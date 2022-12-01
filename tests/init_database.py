@@ -25,9 +25,12 @@ def init_db() -> None:
         print(f"成功创建数据库: {os.environ.get('db_name')}")
     except Exception as e:
         print(f"创建数据库失败: {e}")
-        return
     finally:
         mydb.close()
+
+    choice = input("数据库可能已经存在，输入y继续进行建表: ")
+    if not choice.lower() == "y":
+        return
 
     # 连接数据库
     try:
