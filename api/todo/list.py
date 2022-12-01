@@ -18,7 +18,7 @@ def todoList():
             database=os.environ.get("db_name")
         )
     except Exception as e:
-        abort(500, description="Database Connection Error")
+        abort(500, description=f"Database Connection Error. {e}")
         return
 
     # 数据库操作
@@ -27,7 +27,6 @@ def todoList():
         sql = "SELECT * FROM todo"
         mycursor.execute(sql)
         data = mycursor.fetchall()
-        print(data)
         todo_list = []
         for todo in data:
             todo_list.append({
@@ -41,7 +40,7 @@ def todoList():
             })
         return jsonify({"data": todo_list, "status": 0, "message": "OK"})
     except Exception as e:
-        abort(500, description="Database Operation Error")
+        abort(500, description=f"Database Operation Error. {e}")
         return
     finally:
         mydb.close()
