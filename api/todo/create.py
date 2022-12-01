@@ -3,7 +3,7 @@ from flask import abort, request, jsonify
 from api.todo import todo_bp
 import mysql.connector
 import os
-from request_model.TodoCreateModel import TodoCreateModel
+from model.TodoCreateModel import TodoCreateModel
 
 
 @todo_bp.route("/create", methods=["POST"])

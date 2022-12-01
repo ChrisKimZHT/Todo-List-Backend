@@ -8,4 +8,5 @@ from .delete import todoDelete
 from .update import todoUpdate
 from .list import todoList
 from .get import todoGet
+from .getToday import todoGetToday
 from .toggleFinish import todoToggleFinish
