@@ -60,7 +60,7 @@ CREATE TABLE todo (
     PRIMARY KEY (id)
 );
 """)
-        print("Todo数据表创建完成")
+        print("todo数据表创建完成")
         mycursor.execute("""
 CREATE TABLE note (
     id int NOT NULL AUTO_INCREMENT,
@@ -71,7 +71,16 @@ CREATE TABLE note (
     PRIMARY KEY (ID)
 );
 """)
-        print("Note数据表创建完成")
+        print("note数据表创建完成")
+        mycursor.execute("""
+CREATE TABLE user (
+    id int NOT NULL AUTO_INCREMENT,
+    username varchar(255),
+    password varchar(255),
+    PRIMARY KEY (id)
+)
+""")
+        print("user数据表创建完成")
         print("数据库初始化完成")
     except Exception as e:
         print(f"创建数据表失败{e}")

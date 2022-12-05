@@ -4,6 +4,7 @@ load_dotenv()
 from flask import Flask, jsonify
 from api.todo import todo_bp
 from api.note import note_bp
+from api.auth import auth_bp
 from flask_cors import *
 
 app = Flask(__name__)
@@ -28,6 +29,7 @@ def internal_server_error(e):  # 500 Internal Server Error
 
 app.register_blueprint(todo_bp)
 app.register_blueprint(note_bp)
+app.register_blueprint(auth_bp)
 
 if __name__ == '__main__':
     app.run()
