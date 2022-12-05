@@ -36,7 +36,6 @@ def authLogin():
         val = (req_username,)
         mycursor.execute(sql, val)
         data = mycursor.fetchall()
-        print(data)
         if len(data) == 0:
             return jsonify({"status": 1, "message": "User Not Found."})
     except Exception as e:

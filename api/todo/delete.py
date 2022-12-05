@@ -2,11 +2,21 @@ from api.todo import todo_bp
 from flask import request, abort, jsonify
 import mysql.connector
 import os
+from utils.jwt_auth import verify_jwt
 
 
 @todo_bp.route("/delete", methods=["DELETE"])
 def todoDelete():
     request_data = request.get_json()
+
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
 
     # 数据校验
     try:
@@ -30,7 +40,7 @@ def todoDelete():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"DELETE FROM todo WHERE id={request_id}"
+        sql = f"DELETE FROM todo WHERE id={request_id} AND userid={userid}"
         mycursor.execute(sql)
         mydb.commit()
         return jsonify({"status": 0, "message": "OK"})

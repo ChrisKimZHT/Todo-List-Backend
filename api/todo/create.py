@@ -4,10 +4,20 @@ from api.todo import todo_bp
 import mysql.connector
 import os
 from model.TodoCreateModel import TodoCreateModel
+from utils.jwt_auth import verify_jwt
 
 
 @todo_bp.route("/create", methods=["POST"])
 def todoCreate():
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
+
     request_data = request.get_json()
 
     # 数据校验
@@ -33,8 +43,8 @@ def todoCreate():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"INSERT INTO todo (title, detail, begin, end, isDeadLine, isFinished) VALUES (%s, %s, %s, %s, %s, %s)"
-        val = (todo_data["title"], todo_data["detail"], todo_data["begin"],
+        sql = f"INSERT INTO todo (userid, title, detail, begin, end, isdeadline, isfinished) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        val = (userid, todo_data["title"], todo_data["detail"], todo_data["begin"],
                todo_data["end"], todo_data["isDeadLine"], todo_data["isFinished"])
         mycursor.execute(sql, val)
         mydb.commit()

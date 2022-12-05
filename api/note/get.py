@@ -2,11 +2,21 @@ from api.note import note_bp
 from flask import request, abort, jsonify
 import mysql.connector
 import os
+from utils.jwt_auth import verify_jwt
 
 
 @note_bp.route("/get", methods=["GET"])
 def noteGet():
     request_arg = request.args.to_dict()
+
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
 
     # 数据校验
     try:
@@ -30,7 +40,7 @@ def noteGet():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"SELECT * FROM note WHERE id={request_id}"
+        sql = f"SELECT * FROM note WHERE id={request_id} AND userid={userid}"
         mycursor.execute(sql)
         data = mycursor.fetchall()
     except Exception as e:
@@ -48,10 +58,11 @@ def noteGet():
     try:
         selected_note = {
             "id": data[0][0],
-            "title": data[0][1],
-            "content": data[0][2],
-            "date": data[0][3],
-            "star": bool(data[0][4]),
+            "userid": data[0][1],
+            "title": data[0][2],
+            "content": data[0][3],
+            "date": data[0][4],
+            "star": bool(data[0][5]),
         }
         return jsonify({"data": selected_note, "status": 0, "message": "OK"})
     except Exception as e:

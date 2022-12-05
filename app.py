@@ -22,6 +22,11 @@ def internal_server_error(e):  # 400 Bad Request
     return jsonify(status=1, message=str(e)), 400
 
 
+@app.errorhandler(401)
+def internal_server_error(e):  # 401 Unauthorized
+    return jsonify(status=1, message=str(e)), 401
+
+
 @app.errorhandler(500)
 def internal_server_error(e):  # 500 Internal Server Error
     return jsonify(status=1, message=str(e)), 500

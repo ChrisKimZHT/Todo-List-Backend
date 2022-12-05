@@ -3,11 +3,21 @@ from flask import request, abort, jsonify
 import mysql.connector
 import os
 import time
+from utils.jwt_auth import verify_jwt
 
 
 @todo_bp.route("/getToday", methods=["GET"])
 def todoGetToday():
     request_arg = request.args.to_dict()
+
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
 
     # 数据校验
     try:
@@ -33,8 +43,9 @@ def todoGetToday():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"SELECT * FROM todo"
-        mycursor.execute(sql)
+        sql = f"SELECT * FROM todo WHERE userid=%s"
+        val = (userid,)
+        mycursor.execute(sql, val)
         data = mycursor.fetchall()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
@@ -48,12 +59,13 @@ def todoGetToday():
         for row in data:
             temp = {
                 "id": row[0],
-                "title": row[1],
-                "detail": row[2],
-                "begin": row[3],
-                "end": row[4],
-                "isDeadLine": bool(row[5]),
-                "isFinished": bool(row[6]),
+                "userid": row[1],
+                "title": row[2],
+                "detail": row[3],
+                "begin": row[4],
+                "end": row[5],
+                "isDeadLine": bool(row[6]),
+                "isFinished": bool(row[7]),
             }
             if temp["isDeadLine"]:
                 todo_time = time.localtime(temp["end"])

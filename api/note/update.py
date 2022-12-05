@@ -4,10 +4,20 @@ import mysql.connector
 import os
 import pydantic.error_wrappers
 from model.NoteUpdateModel import NoteUpdateModel
+from utils.jwt_auth import verify_jwt
 
 
 @note_bp.route("/update", methods=["POST"])
 def noteUpdate():
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
+
     request_data = request.get_json()
     # 数据校验
     try:
@@ -32,8 +42,8 @@ def noteUpdate():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"UPDATE note SET title = %s, content = %s, date = %s, star = %s WHERE id = %s"
-        val = (note_data["title"], note_data["content"], note_data["date"], note_data["star"], note_data["id"])
+        sql = f"UPDATE note SET title = %s, content = %s, date = %s, star = %s WHERE id = %s AND userid = %s"
+        val = (note_data["title"], note_data["content"], note_data["date"], note_data["star"], note_data["id"], userid)
         mycursor.execute(sql, val)
         mydb.commit()
         return jsonify({"status": 0, "message": "OK"})

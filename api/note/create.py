@@ -4,11 +4,21 @@ import mysql.connector
 import os
 import pydantic.error_wrappers
 from model.NoteCreateModel import NoteCreateModel
+from utils.jwt_auth import verify_jwt
 
 
 @note_bp.route("/create", methods=["POST"])
 def noteCreate():
     request_data = request.get_json()
+
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
 
     # 数据校验
     try:
@@ -34,8 +44,8 @@ def noteCreate():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"INSERT INTO note (title, content, date, star) VALUES (%s, %s, %s, %s)"
-        val = (note_data["title"], note_data["content"], note_data["date"], note_data["star"])
+        sql = f"INSERT INTO note (userid, title, content, date, star) VALUES (%s, %s, %s, %s, %s)"
+        val = (userid, note_data["title"], note_data["content"], note_data["date"], note_data["star"])
         mycursor.execute(sql, val)
         mydb.commit()
         return jsonify({"status": 0, "message": "OK"})

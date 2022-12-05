@@ -2,11 +2,21 @@ from api.todo import todo_bp
 from flask import request, abort, jsonify
 import mysql.connector
 import os
+from utils.jwt_auth import verify_jwt
 
 
 @todo_bp.route("/get", methods=["GET"])
 def todoGet():
     request_arg = request.args.to_dict()
+
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
 
     # 数据校验
     try:
@@ -30,7 +40,7 @@ def todoGet():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"SELECT * FROM todo WHERE id={request_id}"
+        sql = f"SELECT * FROM todo WHERE id={request_id} AND userid={userid}"
         mycursor.execute(sql)
         data = mycursor.fetchall()
     except Exception as e:
@@ -48,12 +58,13 @@ def todoGet():
     try:
         selected_todo = {
             "id": data[0][0],
-            "title": data[0][1],
-            "detail": data[0][2],
-            "begin": data[0][3],
-            "end": data[0][4],
-            "isDeadLine": bool(data[0][5]),
-            "isFinished": bool(data[0][6]),
+            "userid": data[0][1],
+            "title": data[0][2],
+            "detail": data[0][3],
+            "begin": data[0][4],
+            "end": data[0][5],
+            "isDeadLine": bool(data[0][6]),
+            "isFinished": bool(data[0][7]),
         }
         return jsonify({"data": selected_todo, "status": 0, "message": "OK"})
     except Exception as e:

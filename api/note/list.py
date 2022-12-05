@@ -1,11 +1,21 @@
 from api.note import note_bp
 import mysql.connector
 import os
-from flask import abort, jsonify
+from flask import abort, jsonify, request
+from utils.jwt_auth import verify_jwt
 
 
 @note_bp.route("/list", methods=["GET"])
 def noteList():
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
+
     # 连接数据库
     try:
         mydb = mysql.connector.connect(
@@ -21,8 +31,9 @@ def noteList():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = "SELECT * FROM note"
-        mycursor.execute(sql)
+        sql = "SELECT * FROM note WHERE userid=%s"
+        val = (userid,)
+        mycursor.execute(sql, val)
         data = mycursor.fetchall()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
@@ -36,10 +47,11 @@ def noteList():
         for note in data:
             note_list.append({
                 "id": note[0],
-                "title": note[1],
-                "content": note[2],
-                "date": note[3],
-                "star": bool(note[4]),
+                "userid": note[1],
+                "title": note[2],
+                "content": note[3],
+                "date": note[4],
+                "star": bool(note[5]),
             })
         return jsonify({"data": note_list, "status": 0, "message": "OK"})
     except Exception as e:

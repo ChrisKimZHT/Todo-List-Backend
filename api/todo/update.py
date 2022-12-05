@@ -4,11 +4,22 @@ import pydantic.error_wrappers
 from model.TodoUpdateModel import TodoUpdateModel
 import mysql.connector
 import os
+from utils.jwt_auth import verify_jwt
 
 
 @todo_bp.route("/update", methods=["POST"])
 def todoUpdate():
     request_data = request.get_json()
+
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+    userid = payload["uid"]
+
     # 数据校验
     try:
         validated_data = TodoUpdateModel(**request_data).dict()
@@ -32,9 +43,9 @@ def todoUpdate():
     # 数据库操作
     try:
         mycursor = mydb.cursor()
-        sql = f"UPDATE todo SET title = %s, detail = %s, begin = %s, end = %s, isDeadLine = %s, isFinished = %s WHERE id = %s"
+        sql = f"UPDATE todo SET title = %s, detail = %s, begin = %s, end = %s, isDeadLine = %s, isFinished = %s WHERE id = %s AND userid = %s"
         val = (todo_data["title"], todo_data["detail"], todo_data["begin"], todo_data["end"],
-               todo_data["isDeadLine"], todo_data["isFinished"], todo_data["id"])
+               todo_data["isDeadLine"], todo_data["isFinished"], todo_data["id"], userid)
         mycursor.execute(sql, val)
         mydb.commit()
         return jsonify({"status": 0, "message": "OK"})

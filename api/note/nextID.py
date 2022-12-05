@@ -2,10 +2,19 @@ from api.note import note_bp
 from flask import request, abort, jsonify
 import mysql.connector
 import os
+from utils.jwt_auth import verify_jwt
 
 
 @note_bp.route("/nextID", methods=["GET"])
 def noteNextID():
+    # token校验
+    header_auth = request.headers.get("Authorization")
+    token = header_auth[7:]
+    payload = verify_jwt(token)
+    if payload is None:
+        abort(401, description="Invaild Token.")
+        return
+
     # 连接数据库
     try:
         mydb = mysql.connector.connect(
