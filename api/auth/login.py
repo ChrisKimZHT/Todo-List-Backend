@@ -50,4 +50,5 @@ def authLogin():
         return jsonify({"status": 2, "message": "Password Not Match."})
 
     jwt = generate_jwt({"uid": db_uid})
-    return jsonify({"token": jwt, "status": 0, "message": "OK"})
+
+    return jsonify({"token": jwt, "status": 0, "message": "OK", "uid": db_uid})
