@@ -51,6 +51,7 @@ def init_db() -> None:
         mycursor.execute("""
 CREATE TABLE todo (
     id int NOT NULL AUTO_INCREMENT,
+    userid int,
     title varchar(255),
     detail varchar(255),
     begin int,
@@ -64,6 +65,7 @@ CREATE TABLE todo (
         mycursor.execute("""
 CREATE TABLE note (
     id int NOT NULL AUTO_INCREMENT,
+    userid int,
     title varchar(255),
     content varchar(255),
     date int,
