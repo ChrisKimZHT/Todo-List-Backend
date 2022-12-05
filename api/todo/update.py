@@ -13,6 +13,9 @@ def todoUpdate():
 
     # token校验
     header_auth = request.headers.get("Authorization")
+    if header_auth is None:
+        abort(401, description="Unauthorized.")
+        return
     token = header_auth[7:]
     payload = verify_jwt(token)
     if payload is None:
