@@ -15,7 +15,7 @@ def generate_jwt(payload):
 def verify_jwt(token):
     secret = os.environ.get("jwt_secret")
     try:
-        payload = jwt.decode(token, secret, algorithm="HS256")
+        payload = jwt.decode(token, secret, algorithms=["HS256"])
     except jwt.PyJWTError:
         payload = None
     return payload
