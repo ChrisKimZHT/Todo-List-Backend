@@ -1,10 +1,10 @@
 from api.note import note_bp
 from flask import request, abort, jsonify
-import mysql.connector
-import os
 import pydantic.error_wrappers
 from model.NoteUpdateModel import NoteUpdateModel
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
+from models import Note
+from ext import db
 
 
 @note_bp.route("/update", methods=["POST"])
@@ -19,7 +19,7 @@ def noteUpdate():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
+    userID = payload["uid"]
 
     request_data = request.get_json()
     # 数据校验
@@ -30,28 +30,15 @@ def noteUpdate():
         return
     note_data = validated_data["data"]
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"UPDATE note SET title = %s, content = %s, date = %s, star = %s WHERE id = %s AND userid = %s"
-        val = (note_data["title"], note_data["content"], note_data["date"], note_data["star"], note_data["id"], userid)
-        mycursor.execute(sql, val)
-        mydb.commit()
+        select_note = Note.query.filter_by(userID=userID, id=note_data["id"]).first()
+        select_note.title = note_data["title"]
+        select_note.content = note_data["content"]
+        select_note.date = note_data["date"]
+        select_note.isStared = note_data["isStared"]
+        db.session.commit()
         return jsonify({"status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()

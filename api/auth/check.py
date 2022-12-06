@@ -1,6 +1,6 @@
 from api.auth import auth_bp
 from flask import request, abort, jsonify
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
 
 
 @auth_bp.route("/check", methods=["POST"])

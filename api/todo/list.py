@@ -1,8 +1,7 @@
 from flask import abort, jsonify, request
 from api.todo import todo_bp
-import mysql.connector
-import os
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
+from models import Todo
 
 
 @todo_bp.route("/list", methods=["GET"])
@@ -17,48 +16,29 @@ def todoList():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
-
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
+    userID = payload["uid"]
 
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = "SELECT * FROM todo WHERE userid = %s"
-        val = (userid,)
-        mycursor.execute(sql, val)
-        data = mycursor.fetchall()
+        all_todo = Todo.query.filter_by(userID=userID).all()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()
 
     # 数据处理操作
     try:
-        todo_list = []
-        for todo in data:
-            todo_list.append({
-                "id": todo[0],
-                "userid": todo[1],
-                "title": todo[2],
-                "detail": todo[3],
-                "begin": todo[4],
-                "end": todo[5],
-                "isDeadLine": bool(todo[6]),
-                "isFinished": bool(todo[7]),
+        result = []
+        for todo in all_todo:
+            result.append({
+                "id": todo.id,
+                "title": todo.title,
+                "detail": todo.detail,
+                "begin": todo.begin,
+                "end": todo.end,
+                "isDeadLine": todo.isDeadLine,
+                "isFinished": todo.isFinished,
             })
-        return jsonify({"data": todo_list, "status": 0, "message": "OK"})
+        return jsonify({"data": result, "status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Process Data Error. {e}")
         return

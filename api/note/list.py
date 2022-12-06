@@ -1,8 +1,7 @@
 from api.note import note_bp
-import mysql.connector
-import os
 from flask import abort, jsonify, request
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
+from models import Note
 
 
 @note_bp.route("/list", methods=["GET"])
@@ -17,46 +16,27 @@ def noteList():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
-
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
+    userID = payload["uid"]
 
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = "SELECT * FROM note WHERE userid=%s"
-        val = (userid,)
-        mycursor.execute(sql, val)
-        data = mycursor.fetchall()
+        all_note = Note.query.filter_by(userID=userID).all()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()
 
     # 数据处理操作
     try:
-        note_list = []
-        for note in data:
-            note_list.append({
-                "id": note[0],
-                "userid": note[1],
-                "title": note[2],
-                "content": note[3],
-                "date": note[4],
-                "star": bool(note[5]),
+        res = []
+        for note in all_note:
+            res.append({
+                "id": note.id,
+                "title": note.title,
+                "content": note.content,
+                "date": note.date,
+                "isStared": note.isStared,
             })
-        return jsonify({"data": note_list, "status": 0, "message": "OK"})
+        return jsonify({"data": res, "status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Process Data Error. {e}")
         return

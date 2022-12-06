@@ -1,8 +1,7 @@
 from api.note import note_bp
 from flask import request, abort, jsonify
-import mysql.connector
-import os
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
+from models import Note
 
 
 @note_bp.route("/get", methods=["GET"])
@@ -19,7 +18,7 @@ def noteGet():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
+    userID = payload["uid"]
 
     # 数据校验
     try:
@@ -28,46 +27,28 @@ def noteGet():
         abort(400, description=f"Request Format Error. {e}")
         return
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"SELECT * FROM note WHERE id={request_id} AND userid={userid}"
-        mycursor.execute(sql)
-        data = mycursor.fetchall()
+        selected_note = Note.query.filter_by(userID=userID, id=request_id).first()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()
 
     # 检测数据是否存在
-    if len(data) == 0:
+    if selected_note is None:
         abort(400, description="Request ID Not Found.")
         return
 
     # 数据处理操作
     try:
-        selected_note = {
-            "id": data[0][0],
-            "userid": data[0][1],
-            "title": data[0][2],
-            "content": data[0][3],
-            "date": data[0][4],
-            "star": bool(data[0][5]),
+        data = {
+            "id": selected_note.id,
+            "title": selected_note.title,
+            "content": selected_note.content,
+            "date": selected_note.date,
+            "isStared": selected_note.isStared,
         }
-        return jsonify({"data": selected_note, "status": 0, "message": "OK"})
+        return jsonify({"data": data, "status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Process Data Error. {e}")
         return

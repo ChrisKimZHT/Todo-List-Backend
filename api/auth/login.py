@@ -1,8 +1,7 @@
 from api.auth import auth_bp
 from flask import request, abort, jsonify
-import mysql.connector
-import os
-from utils.jwt_auth import generate_jwt
+from jwtauth import generate_jwt
+from models import User
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -17,35 +16,18 @@ def authLogin():
         abort(400, description=f"Request Format Error. {e}")
         return
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"SELECT * FROM user WHERE username=%s"
-        val = (req_username,)
-        mycursor.execute(sql, val)
-        data = mycursor.fetchall()
-        if len(data) == 0:
+        # 先检查用户是否存在
+        data = User.query.filter_by(username=req_username).first()
+        if data is None:
             return jsonify({"status": 1, "message": "User Not Found."})
     except Exception as e:
-        abort(500, description=f"Database Operation Error. {e}")
+        abort(500, description=f"Database Error. {e}")
         return
-    finally:
-        mydb.close()
 
-    db_uid = data[0][0]
-    db_password = data[0][2]
+    db_uid = data.id
+    db_password = data.password
     if db_password != req_password:
         return jsonify({"status": 2, "message": "Password Not Match."})
 
