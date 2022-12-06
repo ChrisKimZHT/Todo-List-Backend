@@ -1,8 +1,7 @@
 from api.todo import todo_bp
 from flask import request, abort, jsonify
-import mysql.connector
-import os
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
+from models import Todo
 
 
 @todo_bp.route("/get", methods=["GET"])
@@ -19,7 +18,7 @@ def todoGet():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
+    userID = payload["uid"]
 
     # 数据校验
     try:
@@ -28,48 +27,26 @@ def todoGet():
         abort(400, description=f"Request Format Error. {e}")
         return
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
-    try:
-        mycursor = mydb.cursor()
-        sql = f"SELECT * FROM todo WHERE id={request_id} AND userid={userid}"
-        mycursor.execute(sql)
-        data = mycursor.fetchall()
-    except Exception as e:
-        abort(500, description=f"Database Operation Error. {e}")
-        return
-    finally:
-        mydb.close()
+    selected_todo = Todo.query.filter_by(id=request_id, userID=userID).first()
 
     # 检测数据是否存在
-    if len(data) == 0:
+    if selected_todo is None:
         abort(400, description="Request ID Not Found.")
         return
 
     # 数据处理操作
     try:
-        selected_todo = {
-            "id": data[0][0],
-            "userid": data[0][1],
-            "title": data[0][2],
-            "detail": data[0][3],
-            "begin": data[0][4],
-            "end": data[0][5],
-            "isDeadLine": bool(data[0][6]),
-            "isFinished": bool(data[0][7]),
+        data = {
+            "id": selected_todo.id,
+            "title": selected_todo.title,
+            "detail": selected_todo.detail,
+            "begin": selected_todo.begin,
+            "end": selected_todo.end,
+            "isDeadLine": selected_todo.isDeadLine,
+            "isFinished": selected_todo.isFinished,
         }
-        return jsonify({"data": selected_todo, "status": 0, "message": "OK"})
+        return jsonify({"data": data, "status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Process Data Error. {e}")
         return

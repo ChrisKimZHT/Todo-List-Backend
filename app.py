@@ -1,15 +1,18 @@
-from dotenv import load_dotenv
-
-load_dotenv()
 from flask import Flask, jsonify
 from api.todo import todo_bp
 from api.note import note_bp
 from api.auth import auth_bp
-from flask_cors import *
+from flask_cors import CORS
+from flask_migrate import Migrate
+from ext import db
+import configs
 
 app = Flask(__name__)
-app.secret_key = "Development Key"
+app.config.from_object(configs)
+app.secret_key = app.config["FLASK_SECRET_KEY"]
 CORS(app, supports_credentials=True)
+db.init_app(app)
+migrate = Migrate(app, db)
 
 
 @app.route('/')

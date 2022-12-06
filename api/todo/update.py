@@ -1,10 +1,10 @@
 from api.todo import todo_bp
 from flask import request, abort, jsonify
 import pydantic.error_wrappers
-from model.TodoUpdateModel import TodoUpdateModel
-import mysql.connector
-import os
-from utils.jwt_auth import verify_jwt
+from pydantic_model.TodoUpdateModel import TodoUpdateModel
+from jwtauth import verify_jwt
+from models import Todo
+from ext import db
 
 
 @todo_bp.route("/update", methods=["POST"])
@@ -21,7 +21,7 @@ def todoUpdate():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
+    userID = payload["uid"]
 
     # 数据校验
     try:
@@ -31,29 +31,17 @@ def todoUpdate():
         return
     todo_data = validated_data["data"]
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"UPDATE todo SET title = %s, detail = %s, begin = %s, end = %s, isDeadLine = %s, isFinished = %s WHERE id = %s AND userid = %s"
-        val = (todo_data["title"], todo_data["detail"], todo_data["begin"], todo_data["end"],
-               todo_data["isDeadLine"], todo_data["isFinished"], todo_data["id"], userid)
-        mycursor.execute(sql, val)
-        mydb.commit()
+        selected_todo = Todo.query.filter_by(userID=userID, id=todo_data["id"]).first()
+        selected_todo.title = todo_data["title"]
+        selected_todo.detail = todo_data["detail"]
+        selected_todo.begin = todo_data["begin"]
+        selected_todo.end = todo_data["end"]
+        selected_todo.isDeadLine = todo_data["isDeadLine"]
+        selected_todo.isFinished = todo_data["isFinished"]
+        db.session.commit()
         return jsonify({"status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()

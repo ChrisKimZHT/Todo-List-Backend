@@ -1,9 +1,8 @@
 from api.todo import todo_bp
 from flask import request, abort, jsonify
-import mysql.connector
-import os
 import time
-from utils.jwt_auth import verify_jwt
+from jwtauth import verify_jwt
+from models import Todo
 
 
 @todo_bp.route("/getToday", methods=["GET"])
@@ -20,7 +19,7 @@ def todoGetToday():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
+    userID = payload["uid"]
 
     # 数据校验
     try:
@@ -31,44 +30,25 @@ def todoGetToday():
         abort(400, description=f"Request Format Error. {e}")
         return
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"SELECT * FROM todo WHERE userid=%s"
-        val = (userid,)
-        mycursor.execute(sql, val)
-        data = mycursor.fetchall()
+        all_todo = Todo.query.filter_by(userID=userID).all()
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()
 
     # 数据处理操作
     try:
         result = []
-        for row in data:
+        for todo in all_todo:
             temp = {
-                "id": row[0],
-                "userid": row[1],
-                "title": row[2],
-                "detail": row[3],
-                "begin": row[4],
-                "end": row[5],
-                "isDeadLine": bool(row[6]),
-                "isFinished": bool(row[7]),
+                "id": todo.id,
+                "title": todo.title,
+                "detail": todo.detail,
+                "begin": todo.begin,
+                "end": todo.end,
+                "isDeadLine": todo.isDeadLine,
+                "isFinished": todo.isFinished,
             }
             if temp["isDeadLine"]:
                 todo_time = time.localtime(temp["end"])

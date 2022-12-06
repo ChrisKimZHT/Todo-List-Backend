@@ -1,10 +1,10 @@
 from api.note import note_bp
 from flask import request, abort, jsonify
-import mysql.connector
-import os
 import pydantic.error_wrappers
-from model.NoteCreateModel import NoteCreateModel
-from utils.jwt_auth import verify_jwt
+from pydantic_model.NoteCreateModel import NoteCreateModel
+from jwtauth import verify_jwt
+from models import Note
+from ext import db
 
 
 @note_bp.route("/create", methods=["POST"])
@@ -21,7 +21,7 @@ def noteCreate():
     if payload is None:
         abort(401, description="Invaild Token.")
         return
-    userid = payload["uid"]
+    userID = payload["uid"]
 
     # 数据校验
     try:
@@ -32,28 +32,12 @@ def noteCreate():
         return
     note_data = validated_data["data"]
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"INSERT INTO note (userid, title, content, date, star) VALUES (%s, %s, %s, %s, %s)"
-        val = (userid, note_data["title"], note_data["content"], note_data["date"], note_data["star"])
-        mycursor.execute(sql, val)
-        mydb.commit()
+        new_note = Note(userID, note_data["title"], note_data["content"], note_data["date"], note_data["isStared"])
+        db.session.add(new_note)
+        db.session.commit()
         return jsonify({"status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()

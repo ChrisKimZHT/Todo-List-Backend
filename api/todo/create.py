@@ -1,10 +1,10 @@
 import pydantic.error_wrappers
 from flask import abort, request, jsonify
 from api.todo import todo_bp
-import mysql.connector
-import os
-from model.TodoCreateModel import TodoCreateModel
-from utils.jwt_auth import verify_jwt
+from pydantic_model.TodoCreateModel import TodoCreateModel
+from jwtauth import verify_jwt
+from models import Todo
+from ext import db
 
 
 @todo_bp.route("/create", methods=["POST"])
@@ -31,29 +31,13 @@ def todoCreate():
         return
     todo_data = validated_data["data"]
 
-    # 连接数据库
-    try:
-        mydb = mysql.connector.connect(
-            host=os.environ.get("db_host"),
-            user=os.environ.get("db_user"),
-            password=os.environ.get("db_password"),
-            database=os.environ.get("db_name")
-        )
-    except Exception as e:
-        abort(500, description=f"Database Connection Error. {e}")
-        return
-
     # 数据库操作
     try:
-        mycursor = mydb.cursor()
-        sql = f"INSERT INTO todo (userid, title, detail, begin, end, isdeadline, isfinished) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        val = (userid, todo_data["title"], todo_data["detail"], todo_data["begin"],
-               todo_data["end"], todo_data["isDeadLine"], todo_data["isFinished"])
-        mycursor.execute(sql, val)
-        mydb.commit()
+        new_todo = Todo(userid, todo_data["title"], todo_data["detail"], todo_data["begin"],
+                        todo_data["end"], todo_data["isDeadLine"], todo_data["isFinished"])
+        db.session.add(new_todo)
+        db.session.commit()
         return jsonify({"status": 0, "message": "OK"})
     except Exception as e:
         abort(500, description=f"Database Operation Error. {e}")
         return
-    finally:
-        mydb.close()

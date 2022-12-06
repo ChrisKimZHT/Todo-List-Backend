@@ -6,4 +6,4 @@ class NoteModel(BaseModel):
     title: str
     content: str
     date: int
-    star: bool
+    isStared: bool
