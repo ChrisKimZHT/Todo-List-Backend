@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from model.NoteModel import NoteModel
+from pydantic_model.NoteModel import NoteModel
 
 
 class NoteUpdateModel(BaseModel):

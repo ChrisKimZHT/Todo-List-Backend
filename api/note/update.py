@@ -1,7 +1,7 @@
 from api.note import note_bp
 from flask import request, abort, jsonify
 import pydantic.error_wrappers
-from model.NoteUpdateModel import NoteUpdateModel
+from pydantic_model.NoteUpdateModel import NoteUpdateModel
 from jwtauth import verify_jwt
 from models import Note
 from ext import db

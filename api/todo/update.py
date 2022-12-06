@@ -1,7 +1,7 @@
 from api.todo import todo_bp
 from flask import request, abort, jsonify
 import pydantic.error_wrappers
-from model.TodoUpdateModel import TodoUpdateModel
+from pydantic_model.TodoUpdateModel import TodoUpdateModel
 from jwtauth import verify_jwt
 from models import Todo
 from ext import db
